@@ -6,8 +6,15 @@ void_mapper_rectangles_t void_mapper(void_mapper_rectangles_t boxes, void_mapper
 {
     (void) boxes;
     (void) area;
-    (void) buffer;
-    (void) size;
+
+    if (buffer == NULL || size == 0) {
+        return (void_mapper_rectangles_t) {.buffer = NULL, .size = 0};
+    }
+
+    if (boxes.buffer == NULL || boxes.size == 0) {
+        buffer[0] = area;
+        return (void_mapper_rectangles_t) {.buffer = buffer, .size = 1};
+    }
 
     return (void_mapper_rectangles_t) {
         .buffer = NULL,
