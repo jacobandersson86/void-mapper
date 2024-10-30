@@ -4,6 +4,12 @@
 #include <stdbool.h>
 #include "void_mapper.h"
 
+#define RECTANGLE(px, py, sw, sl)               \
+        {                                       \
+            .position = { .x = px, .y = py},    \
+            .size = { .x = sw, .y = sl },       \
+        }                                       \
+
 void_mapper_rectangle_t box[1] = {0};
 void_mapper_rectangles_t input = {
     .buffer = box,
@@ -12,11 +18,26 @@ void_mapper_rectangles_t input = {
 
 void_mapper_rectangle_t area = {
     .position = { .x = 0, .y = 0},
-    .size ={100, 200}
+    .size ={ .x = 100, .y = 200}
 };
 
 void_mapper_rectangle_t buffer[10];
 uint16_t buffer_size = sizeof(buffer) / sizeof(buffer[0]);
+
+static void assert_rectangle(void_mapper_rectangle_t expected, void_mapper_rectangle_t actual, unsigned int n)
+{
+    ck_assert_msg(expected.size.x == actual.size.x && expected.size.y == actual.size.y,
+                  "n: %i, size mismatch, expected width: %i height: %i, got width: %i height: %i",
+                  n,
+                  expected.size.x, expected.size.y,
+                  actual.size.x, actual.size.y);
+    ck_assert_msg(expected.position.x == actual.position.x && expected.position.y == actual.position.y,
+                  "n: %i, position mismatch, expected (%i, %i), got (%i, %i)",
+                  n,
+                  expected.position.x, expected.position.y,
+                  actual.position.x, actual.position.y);
+
+}
 
 START_TEST(case_empty_input_size)
 {
@@ -62,6 +83,35 @@ START_TEST(case_empty_buffer_size)
 }
 END_TEST
 
+START_TEST(case_buffer_size)
+{
+    // TODO: Check that the buffer size is big enough. It must be at least (n * 2 + 1)^2 - 1
+}
+END_TEST
+
+START_TEST(case_one_square_in_the_middle)
+{
+    void_mapper_rectangle_t square[1] = { { .position = { .x = 20, .y = 20},
+                                            .size =     { .x = 10, .y = 10} } };
+    void_mapper_rectangles_t input = { .buffer = square, .size = 1 };
+
+    void_mapper_rectangles_t result = void_mapper(input, area, buffer, buffer_size);
+
+
+    void_mapper_rectangle_t expected[8] = {
+        RECTANGLE(0, 0, 20, 20),    RECTANGLE(20, 0, 10, 20),   RECTANGLE(30, 0, 70, 20),
+        RECTANGLE(0, 20, 20, 10),   /* Input was here */        RECTANGLE(30, 20, 70, 10),
+        RECTANGLE(0, 30, 20, 170),  RECTANGLE(20, 30, 10, 170), RECTANGLE(30, 30, 70, 170)
+    };
+
+    for (unsigned int i = 0; i < sizeof(expected)/sizeof(expected[0]); i ++)
+    {
+        assert_rectangle(expected[i], result.buffer[i], i);
+    }
+    ck_assert_int_eq(result.size, 8);
+}
+END_TEST
+
 Suite * void_mapper_suite(void)
 {
     Suite *s;
@@ -76,6 +126,7 @@ Suite * void_mapper_suite(void)
     tcase_add_test(tc_core, case_empty_input_size);
     tcase_add_test(tc_core, case_empty_buffer_ptr);
     tcase_add_test(tc_core, case_empty_buffer_size);
+    tcase_add_test(tc_core, case_one_square_in_the_middle);
     suite_add_tcase(s, tc_core);
 
     return s;
@@ -89,6 +140,8 @@ int main(void)
 
     s = void_mapper_suite();
     sr = srunner_create(s);
+
+    srunner_set_fork_status(sr, CK_NOFORK);
 
     srunner_run_all(sr, CK_NORMAL);
     number_failed = srunner_ntests_failed(sr);

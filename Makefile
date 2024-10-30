@@ -1,7 +1,7 @@
 # Variables
 CC = gcc
 INCLUDE_DIR = include
-CFLAGS = -Wall -Wextra $(shell pkg-config --cflags check) -I$(INCLUDE_DIR)
+CFLAGS = -Wall -Wextra -g $(shell pkg-config --cflags check) -I$(INCLUDE_DIR)
 LDFLAGS = $(shell pkg-config --libs check)
 TARGET = build/void-mapper
 MAIN_SRC = main.c $(wildcard src/*.c)
