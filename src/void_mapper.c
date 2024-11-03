@@ -51,6 +51,76 @@ static bool rectangles_intersect(void_mapper_rectangle_t a, void_mapper_rectangl
     return x_intersect && y_intersect;
 }
 
+static void build_vectors(void_mapper_rectangles_t boxes, void_mapper_rectangle_t area, uint16_t *x_vector, uint16_t *y_vector, uint16_t len)
+{
+    x_vector[0] = area.position.x;
+    x_vector[len - 1] = area.position.x + area.size.x;
+
+    y_vector[0] = area.position.y;
+    y_vector[len - 1] = area.position.y + area.size.y;
+
+    for (int i = 0;  i < boxes.size; i++)
+    {
+        x_vector[i * 2 + 1] = boxes.buffer[i].position.x;
+        x_vector[i * 2 + 2] = boxes.buffer[i].position.x + boxes.buffer[i].size.x;
+        y_vector[i * 2 + 1] = boxes.buffer[i].position.y;
+        y_vector[i * 2 + 2] = boxes.buffer[i].position.y + boxes.buffer[i].size.y;
+    }
+}
+
+void merge(uint16_t *arr, uint16_t start_a, uint16_t end_a, uint16_t start_b, uint16_t end_b)
+{
+    /* Since a and b are already sorted, take the shortcut if they are already sorted */
+    if (arr[end_a] <= arr[start_b])
+        return;
+
+    /* Compare the two parts one by one, from start to end */
+    while (start_a <= end_a && start_b <= end_b) {
+
+        /* If first element is on the correct spot, keep calm and carry on */
+        if (arr[start_a] <= arr[start_b]) {
+            start_a++;
+            continue;
+        }
+
+        /* Otherwise, "start_b" should be at the head */
+        uint16_t value = arr[start_b];
+        uint16_t index = start_b;
+
+        /* Overwrite "start_b" and shift each element to the right */
+        while (index != start_a) {
+            arr[index] = arr[index - 1];
+            index--;
+        }
+
+        /* Finally put the value of "start b" at the head */
+        arr[start_a] = value;
+
+        /* Step one step forward */
+        start_a++; end_a++; start_b++; end_b++;
+    }
+}
+
+void merge_sort(uint16_t *arr, uint16_t left, uint16_t right)
+{
+    /* Recursive divide and conquer, end is reached when left and right is the same*/
+    if (left == right)
+        return;
+
+    /* Divide the range in 2 */
+    uint16_t middle = (left + right) / 2;
+    merge_sort(arr, left, middle);
+    merge_sort(arr, middle + 1, right);
+
+    /* The two halves are sorted at this point, so just merge them knowing they are in numerical order */
+    merge(arr, left, middle, middle + 1, right);
+}
+
+static void sort_vector(uint16_t *vector, uint16_t len)
+{
+    merge_sort(vector, 0, len - 1);
+}
+
 void_mapper_rectangles_t void_mapper(void_mapper_rectangles_t boxes, void_mapper_rectangle_t area,
                                      void_mapper_rectangle_t * buffer, uint16_t size)
 {
@@ -68,19 +138,10 @@ void_mapper_rectangles_t void_mapper(void_mapper_rectangles_t boxes, void_mapper
     // Find all x and y
     uint16_t x_vector[vec_len];
     uint16_t y_vector[vec_len];
-    x_vector[0] = area.position.x;
-    x_vector[vec_len - 1] = area.position.x + area.size.x;
+    build_vectors(boxes, area, x_vector, y_vector, vec_len);
 
-    y_vector[0] = area.position.y;
-    y_vector[vec_len - 1] = area.position.y + area.size.y;
-
-    for (int i = 0;  i < boxes.size; i++)
-    {
-        x_vector[i * 2 + 1] = boxes.buffer[i].position.x;
-        x_vector[i * 2 + 2] = boxes.buffer[i].position.x + boxes.buffer[i].size.x;
-        y_vector[i * 2 + 1] = boxes.buffer[i].position.y;
-        y_vector[i * 2 + 2] = boxes.buffer[i].position.y + boxes.buffer[i].size.y;
-    }
+    sort_vector(x_vector, vec_len);
+    sort_vector(y_vector, vec_len);
 
     // Build all possible rectangles
     uint16_t potential_size = (boxes.size * 2 + 1);
