@@ -121,6 +121,28 @@ static void sort_vector(uint16_t *vector, uint16_t len)
     merge_sort(vector, 0, len - 1);
 }
 
+static uint16_t remove_duplicates(uint16_t *arr, uint16_t len)
+{
+    uint16_t head = 0;
+    while (head < len) {
+        if (arr[head] != arr[head + 1]) {
+            head++;
+            continue;
+        }
+
+        /* Shift everything to the left, overwriting the duplicate */
+        uint16_t index = head;
+        while (index < len) {
+            arr[index] = arr[index + 1];
+            index++;
+        }
+
+        len--;
+    }
+
+    return len;
+}
+
 void_mapper_rectangles_t void_mapper(void_mapper_rectangles_t boxes, void_mapper_rectangle_t area,
                                      void_mapper_rectangle_t * buffer, uint16_t size)
 {
@@ -135,7 +157,7 @@ void_mapper_rectangles_t void_mapper(void_mapper_rectangles_t boxes, void_mapper
 
     uint16_t vec_len = boxes.size * 2 + 2;
 
-    // Find all x and y
+    // Create, sort and cull vectors
     uint16_t x_vector[vec_len];
     uint16_t y_vector[vec_len];
     build_vectors(boxes, area, x_vector, y_vector, vec_len);
@@ -143,16 +165,16 @@ void_mapper_rectangles_t void_mapper(void_mapper_rectangles_t boxes, void_mapper
     sort_vector(x_vector, vec_len);
     sort_vector(y_vector, vec_len);
 
+    uint16_t x_len = remove_duplicates(x_vector, vec_len);
+    uint16_t y_len = remove_duplicates(y_vector, vec_len);
+
     // Build all possible rectangles
-    uint16_t potential_size = (boxes.size * 2 + 1);
-    potential_size *= potential_size;
-
+    uint16_t potential_size = (x_len - 1) * (y_len - 1);
     void_mapper_rectangle_t potential[potential_size];
-
-    vec_len--; /* Avoid iterating last element, as the loop accesses i + 1 */
-    for (uint32_t i = 0; i < vec_len; i++) {
-        for(uint32_t j = 0; j < vec_len; j++) {
-            uint32_t potential_index = i + j * (vec_len);
+    x_len--; y_len--; /* Avoid iterating last element, as the loop accesses i + 1 */
+    for (uint32_t i = 0; i < x_len; i++) {
+        for(uint32_t j = 0; j < y_len; j++) {
+            uint32_t potential_index = i + j * (x_len);
             potential[potential_index] = (void_mapper_rectangle_t) {
                 .position.x = x_vector[i],
                 .position.y = y_vector[j],
