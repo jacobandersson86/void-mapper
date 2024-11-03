@@ -63,10 +63,10 @@ void_mapper_rectangles_t void_mapper(void_mapper_rectangles_t boxes, void_mapper
         return (void_mapper_rectangles_t) {.buffer = buffer, .size = 1};
     }
 
-    uint16_t vec_len = boxes.size + 3;
+    uint16_t vec_len = boxes.size * 2 + 2;
 
     // Find all x and y
-    volatile uint16_t x_vector[vec_len];
+    uint16_t x_vector[vec_len];
     uint16_t y_vector[vec_len];
     x_vector[0] = area.position.x;
     x_vector[vec_len - 1] = area.position.x + area.size.x;
@@ -74,15 +74,13 @@ void_mapper_rectangles_t void_mapper(void_mapper_rectangles_t boxes, void_mapper
     y_vector[0] = area.position.y;
     y_vector[vec_len - 1] = area.position.y + area.size.y;
 
-    uint32_t i = 0;
-    for ( ;  i < boxes.size; i++)
+    for (int i = 0;  i < boxes.size; i++)
     {
-        x_vector[i + 1] = boxes.buffer[i].position.x;
-        y_vector[i + 1] = boxes.buffer[i].position.y;
+        x_vector[i * 2 + 1] = boxes.buffer[i].position.x;
+        x_vector[i * 2 + 2] = boxes.buffer[i].position.x + boxes.buffer[i].size.x;
+        y_vector[i * 2 + 1] = boxes.buffer[i].position.y;
+        y_vector[i * 2 + 2] = boxes.buffer[i].position.y + boxes.buffer[i].size.y;
     }
-
-    x_vector[vec_len - 2] = boxes.buffer[i - 1].position.x + boxes.buffer[i - 1].size.x;
-    y_vector[vec_len - 2] = boxes.buffer[i - 1].position.y + boxes.buffer[i - 1].size.y;
 
     // Build all possible rectangles
     uint16_t potential_size = (boxes.size * 2 + 1);

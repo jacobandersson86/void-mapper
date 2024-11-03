@@ -112,6 +112,33 @@ START_TEST(case_one_square_in_the_middle)
 }
 END_TEST
 
+START_TEST(case_two_squares)
+{
+    void_mapper_rectangle_t squares[2] = {
+        RECTANGLE(20, 20, 10, 10),
+        RECTANGLE(40, 40, 5, 5),
+    };
+    void_mapper_rectangles_t input = { .buffer = squares, .size = 2 };
+
+    void_mapper_rectangles_t result = void_mapper(input, area, buffer, buffer_size);
+
+
+    void_mapper_rectangle_t expected[23] = {
+        RECTANGLE(0, 0,  20, 20),   RECTANGLE(20, 0, 10, 20),   RECTANGLE(30,  0, 10, 20),  RECTANGLE(40,  0, 5, 20),   RECTANGLE(45,  0, 55, 20),
+        RECTANGLE(0, 20, 20, 10),   /* Input here */            RECTANGLE(30, 20, 10, 10),  RECTANGLE(40, 20, 5, 10),   RECTANGLE(45, 20, 55, 10),
+        RECTANGLE(0, 30, 20, 10),   RECTANGLE(20, 30, 10, 10),  RECTANGLE(30, 30, 10, 10),  RECTANGLE(40, 30, 5, 10),   RECTANGLE(45, 30, 55, 10),
+        RECTANGLE(0, 40, 20, 5),    RECTANGLE(20, 40, 10, 5),   RECTANGLE(30, 40, 10, 5),   /* Input here */            RECTANGLE(45, 40, 55, 5),
+        RECTANGLE(0, 45, 20, 155),  RECTANGLE(20, 45, 10, 155), RECTANGLE(30, 45, 10, 155), RECTANGLE(40, 45, 5, 155),  RECTANGLE(45, 45, 55, 155),
+    };
+
+    for (unsigned int i = 0; i < sizeof(expected)/sizeof(expected[0]); i ++)
+    {
+        assert_rectangle(expected[i], result.buffer[i], i);
+    }
+    ck_assert_int_eq(result.size, 23);
+}
+END_TEST
+
 Suite * void_mapper_suite(void)
 {
     Suite *s;
@@ -127,6 +154,7 @@ Suite * void_mapper_suite(void)
     tcase_add_test(tc_core, case_empty_buffer_ptr);
     tcase_add_test(tc_core, case_empty_buffer_size);
     tcase_add_test(tc_core, case_one_square_in_the_middle);
+    tcase_add_test(tc_core, case_two_squares);
     suite_add_tcase(s, tc_core);
 
     return s;
