@@ -215,7 +215,33 @@ START_TEST(case_squares_adjacent_x_and_y)
     {
         assert_rectangle(expected[i], result.buffer[i], i);
     }
-    ck_assert_int_eq(result.size, 13);
+    ck_assert_int_eq(result.size, sizeof(expected)/sizeof(expected[0]));
+}
+END_TEST
+
+START_TEST(case_different_sized_sides)
+{
+    void_mapper_rectangle_t area = RECTANGLE(90, 84, 118, 68);
+
+    void_mapper_rectangle_t squares[2] = {
+        RECTANGLE(115, 84, 51, 68), /* < -- Box 0 */
+        RECTANGLE(166, 89, 16, 16)  /* < -- Box 1 */
+    };
+    void_mapper_rectangles_t input = { .buffer = squares, .size = 2};
+
+    void_mapper_rectangles_t result = void_mapper(input, area, buffer, buffer_size);
+
+    void_mapper_rectangle_t expected[] = {
+        RECTANGLE(90, 84, 25, 5),   /* -------------- */ RECTANGLE(166, 84, 16, 5),   RECTANGLE(182, 84, 26, 5),
+        RECTANGLE(90, 89, 25, 16),  /* ¦ Box 0 here ¦ */      /* Box 1 here */        RECTANGLE(182, 89, 26, 16),
+        RECTANGLE(90, 105, 25, 47), /* -------------- */ RECTANGLE(166, 105, 16, 47), RECTANGLE(182, 105, 26, 47)
+    };
+
+    for (unsigned int i = 0; i < sizeof(expected)/sizeof(expected[0]); i ++)
+    {
+        assert_rectangle(expected[i], result.buffer[i], i);
+    }
+    ck_assert_int_eq(result.size, sizeof(expected)/sizeof(expected[0]));
 }
 END_TEST
 
@@ -238,6 +264,7 @@ Suite * void_mapper_suite(void)
     tcase_add_test(tc_core, case_two_squares_reverse_order);
     tcase_add_test(tc_core, case_squares_sharing_x_and_y);
     tcase_add_test(tc_core, case_squares_adjacent_x_and_y);
+    tcase_add_test(tc_core, case_different_sized_sides);
     suite_add_tcase(s, tc_core);
 
     return s;
