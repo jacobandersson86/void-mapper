@@ -30,8 +30,7 @@ static bool rectangles_intersect(void_mapper_rectangle_t a, void_mapper_rectangl
 
 static bool ranges_intersect(int16_t a0, int16_t a1, int16_t b0, int16_t b1)
 {
-    return  (a0 <= b0 && a1 >= b1 && b0 <= a1) ||
-            (b0 <= a0 && b1 >= a1 && a0 <= b1);
+    return  a1 >= b0 && a0 <= b1;
 }
 
 static bool rectangles_intersect(void_mapper_rectangle_t a, void_mapper_rectangle_t b)
