@@ -10,11 +10,8 @@
             .size = { .x = sw, .y = sl },       \
         }                                       \
 
-void_mapper_rectangle_t box[1] = {0};
-void_mapper_rectangles_t input = {
-    .buffer = box,
-    .size = sizeof(box[0]) / sizeof(box)
-};
+void_mapper_rectangle_t input[1] = { 0 };
+uint16_t input_length = sizeof(input[0]) / sizeof(input);
 
 void_mapper_rectangle_t area = {
     .position = { .x = 0, .y = 0},
@@ -22,7 +19,7 @@ void_mapper_rectangle_t area = {
 };
 
 void_mapper_rectangle_t buffer[10];
-uint16_t buffer_size = sizeof(buffer) / sizeof(buffer[0]);
+uint16_t buffer_length = sizeof(buffer) / sizeof(buffer[0]);
 
 static void assert_rectangle(void_mapper_rectangle_t expected, void_mapper_rectangle_t actual, unsigned int n)
 {
@@ -41,23 +38,23 @@ static void assert_rectangle(void_mapper_rectangle_t expected, void_mapper_recta
 
 START_TEST(case_empty_input_size)
 {
-    input.size = 0;
+    input_length = 0;
 
-    void_mapper_rectangles_t result = void_mapper(input, area, buffer, buffer_size);
+    uint16_t result = void_mapper(area, input, input_length, buffer, buffer_length);
 
-    ck_assert_mem_eq(&result.buffer[0], &area, sizeof(area));
-    ck_assert_uint_eq(result.size, 1);
+    ck_assert_mem_eq(&buffer[0], &area, sizeof(area));
+    ck_assert_uint_eq(result, 1);
 }
 END_TEST
 
 START_TEST(case_empty_input_ptr)
  {
-    input.buffer = NULL;
+    void_mapper_rectangle_t *input = NULL;
 
-    void_mapper_rectangles_t result = void_mapper(input, area, buffer, buffer_size);
+    uint16_t result = void_mapper(area, input, input_length, buffer, buffer_length);
 
-    ck_assert_mem_eq(&result.buffer[0], &area, sizeof(area));
-    ck_assert_uint_eq(result.size, 1);
+    ck_assert_mem_eq(&buffer[0], &area, sizeof(area));
+    ck_assert_uint_eq(result, 1);
 }
 END_TEST
 
@@ -65,21 +62,19 @@ START_TEST(case_empty_buffer_ptr)
 {
     void_mapper_rectangle_t *buffer = NULL;
 
-    void_mapper_rectangles_t result = void_mapper(input, area, buffer, buffer_size);
+    uint16_t result = void_mapper(area, input, input_length, buffer, buffer_length);
 
-    ck_assert_ptr_eq(result.buffer, NULL);
-    ck_assert_uint_eq(result.size, 0);
+    ck_assert_uint_eq(result, 0);
 }
 END_TEST
 
 START_TEST(case_empty_buffer_size)
 {
-    uint16_t buffer_size = 0;
+    uint16_t buffer_length = 0;
 
-    void_mapper_rectangles_t result = void_mapper(input, area, buffer, buffer_size);
+    uint16_t result = void_mapper(area, input, input_length, buffer, buffer_length);
 
-    ck_assert_ptr_eq(result.buffer, NULL);
-    ck_assert_uint_eq(result.size, 0);
+    ck_assert_uint_eq(result, 0);
 }
 END_TEST
 
@@ -93,9 +88,8 @@ START_TEST(case_one_square_in_the_middle)
 {
     void_mapper_rectangle_t square[1] = { { .position = { .x = 20, .y = 20},
                                             .size =     { .x = 10, .y = 10} } };
-    void_mapper_rectangles_t input = { .buffer = square, .size = 1 };
 
-    void_mapper_rectangles_t result = void_mapper(input, area, buffer, buffer_size);
+    uint16_t result = void_mapper(area, square, 1, buffer, buffer_length);
 
 
     void_mapper_rectangle_t expected[8] = {
@@ -106,9 +100,9 @@ START_TEST(case_one_square_in_the_middle)
 
     for (unsigned int i = 0; i < sizeof(expected)/sizeof(expected[0]); i ++)
     {
-        assert_rectangle(expected[i], result.buffer[i], i);
+        assert_rectangle(expected[i], buffer[i], i);
     }
-    ck_assert_int_eq(result.size, 8);
+    ck_assert_int_eq(result, 8);
 }
 END_TEST
 
@@ -118,10 +112,8 @@ START_TEST(case_two_squares)
         RECTANGLE(20, 20, 10, 10),
         RECTANGLE(40, 40, 5, 5),
     };
-    void_mapper_rectangles_t input = { .buffer = squares, .size = 2 };
 
-    void_mapper_rectangles_t result = void_mapper(input, area, buffer, buffer_size);
-
+    uint16_t result = void_mapper(area, squares, 2, buffer, buffer_length);
 
     void_mapper_rectangle_t expected[23] = {
         RECTANGLE(0, 0,  20, 20),   RECTANGLE(20, 0, 10, 20),   RECTANGLE(30,  0, 10, 20),  RECTANGLE(40,  0, 5, 20),   RECTANGLE(45,  0, 55, 20),
@@ -133,9 +125,9 @@ START_TEST(case_two_squares)
 
     for (unsigned int i = 0; i < sizeof(expected)/sizeof(expected[0]); i ++)
     {
-        assert_rectangle(expected[i], result.buffer[i], i);
+        assert_rectangle(expected[i], buffer[i], i);
     }
-    ck_assert_int_eq(result.size, 23);
+    ck_assert_int_eq(result, 23);
 }
 END_TEST
 
@@ -145,10 +137,8 @@ START_TEST(case_two_squares_reverse_order)
         RECTANGLE(40, 40, 5, 5),
         RECTANGLE(20, 20, 10, 10),
     };
-    void_mapper_rectangles_t input = { .buffer = squares, .size = 2 };
 
-    void_mapper_rectangles_t result = void_mapper(input, area, buffer, buffer_size);
-
+    uint16_t result = void_mapper(area, squares, 2, buffer, buffer_length);
 
     void_mapper_rectangle_t expected[23] = {
         RECTANGLE(0, 0,  20, 20),   RECTANGLE(20, 0, 10, 20),   RECTANGLE(30,  0, 10, 20),  RECTANGLE(40,  0, 5, 20),   RECTANGLE(45,  0, 55, 20),
@@ -160,9 +150,9 @@ START_TEST(case_two_squares_reverse_order)
 
     for (unsigned int i = 0; i < sizeof(expected)/sizeof(expected[0]); i ++)
     {
-        assert_rectangle(expected[i], result.buffer[i], i);
+        assert_rectangle(expected[i], buffer[i], i);
     }
-    ck_assert_int_eq(result.size, 23);
+    ck_assert_int_eq(result, 23);
 }
 END_TEST
 
@@ -173,9 +163,8 @@ START_TEST(case_squares_sharing_x_and_y)
         RECTANGLE(40, 20, 5, 10),
         RECTANGLE(20, 40, 10, 5),
     };
-    void_mapper_rectangles_t input = { .buffer = squares, .size = 3 };
 
-    void_mapper_rectangles_t result = void_mapper(input, area, buffer, buffer_size);
+    uint16_t result = void_mapper(area, squares, 3, buffer, buffer_length);
 
     void_mapper_rectangle_t expected[22] = {
         RECTANGLE(0, 0,  20, 20),   RECTANGLE(20, 0, 10, 20),   RECTANGLE(30,  0, 10, 20),  RECTANGLE(40,  0, 5, 20),   RECTANGLE(45,  0, 55, 20),
@@ -187,9 +176,9 @@ START_TEST(case_squares_sharing_x_and_y)
 
     for (unsigned int i = 0; i < sizeof(expected)/sizeof(expected[0]); i ++)
     {
-        assert_rectangle(expected[i], result.buffer[i], i);
+        assert_rectangle(expected[i], buffer[i], i);
     }
-    ck_assert_int_eq(result.size, 22);
+    ck_assert_int_eq(result, 22);
 }
 END_TEST
 
@@ -200,9 +189,8 @@ START_TEST(case_squares_adjacent_x_and_y)
         RECTANGLE(30, 20, 10, 10),
         RECTANGLE(20, 30, 10, 10),
     };
-    void_mapper_rectangles_t input = { .buffer = squares, .size = 3 };
 
-    void_mapper_rectangles_t result = void_mapper(input, area, buffer, buffer_size);
+    uint16_t result = void_mapper(area, squares, 3, buffer, buffer_length);
 
     void_mapper_rectangle_t expected[13] = {
         RECTANGLE(0, 0,  20, 20),   RECTANGLE(20, 0, 10, 20),   RECTANGLE(30,  0, 10, 20),  RECTANGLE(40,  0, 60, 20),
@@ -213,9 +201,9 @@ START_TEST(case_squares_adjacent_x_and_y)
 
     for (unsigned int i = 0; i < sizeof(expected)/sizeof(expected[0]); i ++)
     {
-        assert_rectangle(expected[i], result.buffer[i], i);
+        assert_rectangle(expected[i], buffer[i], i);
     }
-    ck_assert_int_eq(result.size, sizeof(expected)/sizeof(expected[0]));
+    ck_assert_int_eq(result, sizeof(expected)/sizeof(expected[0]));
 }
 END_TEST
 
@@ -227,9 +215,8 @@ START_TEST(case_different_sized_sides)
         RECTANGLE(115, 84, 51, 68), /* < -- Box 0 */
         RECTANGLE(166, 89, 16, 16)  /* < -- Box 1 */
     };
-    void_mapper_rectangles_t input = { .buffer = squares, .size = 2};
 
-    void_mapper_rectangles_t result = void_mapper(input, area, buffer, buffer_size);
+    uint16_t result = void_mapper(area, squares, 2, buffer, buffer_length);
 
     void_mapper_rectangle_t expected[] = {
         RECTANGLE(90, 84, 25, 5),   /* -------------- */ RECTANGLE(166, 84, 16, 5),   RECTANGLE(182, 84, 26, 5),
@@ -239,9 +226,9 @@ START_TEST(case_different_sized_sides)
 
     for (unsigned int i = 0; i < sizeof(expected)/sizeof(expected[0]); i ++)
     {
-        assert_rectangle(expected[i], result.buffer[i], i);
+        assert_rectangle(expected[i], buffer[i], i);
     }
-    ck_assert_int_eq(result.size, sizeof(expected)/sizeof(expected[0]));
+    ck_assert_int_eq(result, sizeof(expected)/sizeof(expected[0]));
 }
 END_TEST
 

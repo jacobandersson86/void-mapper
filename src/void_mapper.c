@@ -50,7 +50,8 @@ static bool rectangles_intersect(void_mapper_rectangle_t a, void_mapper_rectangl
     return x_intersect && y_intersect;
 }
 
-static void build_vectors(void_mapper_rectangles_t boxes, void_mapper_rectangle_t area, uint16_t *x_vector, uint16_t *y_vector, uint16_t len)
+static void build_vectors(void_mapper_rectangle_t area, void_mapper_rectangle_t *input, uint16_t input_length,
+                          uint16_t *x_vector, uint16_t *y_vector, uint16_t len)
 {
     x_vector[0] = area.position.x;
     x_vector[len - 1] = area.position.x + area.size.x;
@@ -58,12 +59,12 @@ static void build_vectors(void_mapper_rectangles_t boxes, void_mapper_rectangle_
     y_vector[0] = area.position.y;
     y_vector[len - 1] = area.position.y + area.size.y;
 
-    for (int i = 0;  i < boxes.size; i++)
+    for (int i = 0;  i < input_length; i++)
     {
-        x_vector[i * 2 + 1] = boxes.buffer[i].position.x;
-        x_vector[i * 2 + 2] = boxes.buffer[i].position.x + boxes.buffer[i].size.x;
-        y_vector[i * 2 + 1] = boxes.buffer[i].position.y;
-        y_vector[i * 2 + 2] = boxes.buffer[i].position.y + boxes.buffer[i].size.y;
+        x_vector[i * 2 + 1] = input[i].position.x;
+        x_vector[i * 2 + 2] = input[i].position.x + input[i].size.x;
+        y_vector[i * 2 + 1] = input[i].position.y;
+        y_vector[i * 2 + 2] = input[i].position.y + input[i].size.y;
     }
 }
 
@@ -142,24 +143,24 @@ static uint16_t remove_duplicates(uint16_t *arr, uint16_t len)
     return len;
 }
 
-void_mapper_rectangles_t void_mapper(void_mapper_rectangles_t boxes, void_mapper_rectangle_t area,
-                                     void_mapper_rectangle_t * buffer, uint16_t size)
+uint16_t void_mapper(void_mapper_rectangle_t area, void_mapper_rectangle_t *input, uint16_t input_length,
+                                     void_mapper_rectangle_t * buffer, uint16_t buffer_length)
 {
-    if (buffer == NULL || size == 0) {
-        return (void_mapper_rectangles_t) {.buffer = NULL, .size = 0};
+    if (buffer == NULL || buffer_length == 0) {
+        return 0;
     }
 
-    if (boxes.buffer == NULL || boxes.size == 0) {
+    if (input == NULL || input_length == 0) {
         buffer[0] = area;
-        return (void_mapper_rectangles_t) {.buffer = buffer, .size = 1};
+        return 1;
     }
 
-    uint16_t vec_len = boxes.size * 2 + 2;
+    uint16_t vec_len = input_length * 2 + 2;
 
     // Create, sort and cull vectors
     uint16_t x_vector[vec_len];
     uint16_t y_vector[vec_len];
-    build_vectors(boxes, area, x_vector, y_vector, vec_len);
+    build_vectors(area, input, input_length, x_vector, y_vector, vec_len);
 
     sort_vector(x_vector, vec_len);
     sort_vector(y_vector, vec_len);
@@ -188,17 +189,14 @@ void_mapper_rectangles_t void_mapper(void_mapper_rectangles_t boxes, void_mapper
     for (int i = 0; i < potential_size; i ++)
     {
         bool save = true;
-        for (int j = 0; j < boxes.size; j++)
+        for (int j = 0; j < input_length; j++)
         {
-            save = rectangles_intersect(potential[i], boxes.buffer[j]) == true ? false : save;
+            save = rectangles_intersect(potential[i], input[j]) == true ? false : save;
         }
         if (save) {
             buffer[n_found++] = potential[i];
         }
     }
 
-    return (void_mapper_rectangles_t) {
-        .buffer = buffer,
-        .size = n_found
-    };
+    return n_found;
 }
