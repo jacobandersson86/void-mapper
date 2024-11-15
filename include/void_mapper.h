@@ -33,4 +33,18 @@ typedef struct {
  */
 uint16_t void_mapper(void_mapper_rectangle_t area, void_mapper_rectangle_t *input, uint16_t input_length, void_mapper_rectangle_t * buffer, uint16_t buffer_length);
 
+/**
+ * @brief Group rectangles using the "greedy grouping" by alignment strategy.
+ * Basically merge rectangles horizontally if the share the same side, and then
+ * group rectangles vertically if they share the same side.
+ *
+ * This method does not guarantee the best solution but it can optimize the result from
+ * void mapper making the amount of voids a bit smaller.
+ *
+ * @param input
+ * @param input_length
+ * @return uint16_t
+ */
+uint16_t void_mapper_group(void_mapper_rectangle_t input[], uint16_t input_length);
+
 #endif /* __VOID_MAPPER_H__ */

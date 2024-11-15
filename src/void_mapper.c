@@ -143,6 +143,55 @@ static uint16_t remove_duplicates(uint16_t *arr, uint16_t len)
     return len;
 }
 
+static bool can_merge(void_mapper_rectangle_t *a, void_mapper_rectangle_t *b) {
+    return (a->position.x == b->position.x && a->size.x == b->size.x &&
+            (a->position.y + a->size.y == b->position.y || b->position.y + b->size.y == a->position.y)) ||
+           (a->position.y == b->position.y && a->size.y == b->size.y &&
+            (a->position.x + a->size.x == b->position.x || b->position.x + b->size.x == a->position.x));
+}
+
+static void merge_rectangle(void_mapper_rectangle_t *a, void_mapper_rectangle_t *b) {
+    if (a->position.x == b->position.x && a->size.x == b->size.x) {
+        a->size.y += b->size.y;
+        if (b->position.y < a->position.y) {
+            a->position.y = b->position.y;
+        }
+    } else if (a->position.y == b->position.y && a->size.y == b->size.y) {
+        a->size.x += b->size.x;
+        if (b->position.x < a->position.x) {
+            a->position.x = b->position.x;
+        }
+    }
+}
+
+uint16_t void_mapper_group(void_mapper_rectangle_t input[], uint16_t input_length) {
+    bool merged;
+    do {
+        merged = false;
+        for (int i = 0; i < input_length; i++) {
+            if (input[i].size.x == 0 && input[i].size.y == 0) continue;
+            for (int j = i + 1; j < input_length; j++) {
+                if (input[j].size.x == 0 && input[j].size.y == 0) continue;
+                if (can_merge(&input[i], &input[j])) {
+                    merge_rectangle(&input[i], &input[j]);
+                    input[j].size.x = 0;
+                    input[j].size.y = 0;
+                    merged = true;
+                }
+            }
+        }
+    } while (merged);
+
+    int new_length = 0;
+    for (int i = 0; i < input_length; i++) {
+        if (input[i].size.x != 0 && input[i].size.y != 0) {
+            input[new_length++] = input[i];
+        }
+    }
+
+    return new_length;
+}
+
 uint16_t void_mapper(void_mapper_rectangle_t area, void_mapper_rectangle_t *input, uint16_t input_length,
                                      void_mapper_rectangle_t * buffer, uint16_t buffer_length)
 {
