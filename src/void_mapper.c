@@ -97,7 +97,7 @@ void merge(uint16_t *arr, uint16_t start_a, uint16_t end_a, uint16_t start_b, ui
         arr[start_a] = value;
 
         /* Step one step forward */
-        start_a++; end_a++; start_b++; end_b++;
+        start_a++; end_a++; start_b++;
     }
 }
 

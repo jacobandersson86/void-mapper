@@ -232,6 +232,40 @@ START_TEST(case_different_sized_sides)
 }
 END_TEST
 
+START_TEST(case_sort_vectors)
+{
+    /**
+     * This test is from a real-life issue where the vectors where incorrectly
+     * sorted, causing an underflow later on when subtractions were maid.
+     *
+     * The test will catch any underflows.
+     */
+    void_mapper_rectangle_t area = RECTANGLE(0, 0, 320, 240);
+
+    void_mapper_rectangle_t squares[] = {
+        { { 10,  90}, { 60,  60} },
+        { {244,  16}, { 60, 101} },
+        { {244, 123}, { 60, 101} },
+        { { 60,  35}, {162,  27} },
+        { { 90,  84}, { 51,  68} },
+        { {141,  84}, { 51,  68} },
+        { {192,  89}, { 16,  16} },
+        { { 45, 178}, {162,  27} },
+        { {177, 178}, { 11,  27} },
+        { {188, 178}, { 11,  27} },
+        { {199, 178}, {  8,  27} }
+    };
+    uint16_t result = void_mapper(area, squares, sizeof(squares)/sizeof(squares[0]), buffer, buffer_length);
+
+    for (int i = 0; i < result; i ++) {
+        ck_assert_int_le(buffer[i].position.x, 320);
+        ck_assert_int_le(buffer[i].position.x + buffer[i].size.x, 320);
+        ck_assert_int_le(buffer[i].position.y, 240);
+        ck_assert_int_le(buffer[i].position.y + buffer[i].size.y, 240);
+    }
+}
+END_TEST
+
 Suite * void_mapper_suite(void)
 {
     Suite *s;
@@ -252,6 +286,7 @@ Suite * void_mapper_suite(void)
     tcase_add_test(tc_core, case_squares_sharing_x_and_y);
     tcase_add_test(tc_core, case_squares_adjacent_x_and_y);
     tcase_add_test(tc_core, case_different_sized_sides);
+    tcase_add_test(tc_core, case_sort_vectors);
     suite_add_tcase(s, tc_core);
 
     return s;
