@@ -199,6 +199,7 @@ uint16_t void_mapper(void_mapper_rectangle_t area, void_mapper_rectangle_t *inpu
         return 0;
     }
 
+
     if (input == NULL || input_length == 0) {
         buffer[0] = area;
         return 1;
@@ -216,6 +217,11 @@ uint16_t void_mapper(void_mapper_rectangle_t area, void_mapper_rectangle_t *inpu
 
     uint16_t x_len = remove_duplicates(x_vector, vec_len);
     uint16_t y_len = remove_duplicates(y_vector, vec_len);
+
+    uint16_t required_buffer_length = (x_len - 1) * (y_len - 1) - input_length;
+    if (buffer_length < required_buffer_length) {
+        return 0;
+    }
 
     // Build all possible rectangles
     uint16_t potential_size = (x_len - 1) * (y_len - 1);

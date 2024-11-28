@@ -18,7 +18,7 @@ void_mapper_rectangle_t area = {
     .size ={ .x = 100, .y = 200}
 };
 
-void_mapper_rectangle_t buffer[10];
+void_mapper_rectangle_t buffer[512];
 uint16_t buffer_length = sizeof(buffer) / sizeof(buffer[0]);
 
 static void assert_rectangle(void_mapper_rectangle_t expected, void_mapper_rectangle_t actual, unsigned int n)
@@ -80,7 +80,23 @@ END_TEST
 
 START_TEST(case_buffer_size)
 {
-    // TODO: Check that the buffer size is big enough. It must be at least (n * 2 + 1)^2 - 1
+    void_mapper_rectangle_t input[2] = {
+        RECTANGLE(10, 10, 10, 10),
+        RECTANGLE(30, 30, 10, 10)
+    };
+
+    // One square in the middle of an area results in 8 voids. (see 'case_one_square_in_the_middle' to see that
+    // this is correct)
+    uint16_t n_input_assets = 1;
+    uint16_t buffer_length = 7;
+    uint16_t result = void_mapper(area, input, n_input_assets, buffer, buffer_length);
+    ck_assert_int_eq(result, 0);
+
+    // Two squares results in 23 voids (see 'case_two_squares')
+    n_input_assets = 2;
+    buffer_length = 22;
+    result = void_mapper(area, input, n_input_assets, buffer, buffer_length);
+    ck_assert_int_eq(result, 0);
 }
 END_TEST
 
@@ -89,6 +105,7 @@ START_TEST(case_one_square_in_the_middle)
     void_mapper_rectangle_t square[1] = { { .position = { .x = 20, .y = 20},
                                             .size =     { .x = 10, .y = 10} } };
 
+    uint16_t buffer_length = 9;
     uint16_t result = void_mapper(area, square, 1, buffer, buffer_length);
 
 
@@ -113,8 +130,10 @@ START_TEST(case_two_squares)
         RECTANGLE(40, 40, 5, 5),
     };
 
+    uint16_t buffer_length = 23;
     uint16_t result = void_mapper(area, squares, 2, buffer, buffer_length);
 
+    ck_assert_int_eq(result, 23);
     void_mapper_rectangle_t expected[23] = {
         RECTANGLE(0, 0,  20, 20),   RECTANGLE(20, 0, 10, 20),   RECTANGLE(30,  0, 10, 20),  RECTANGLE(40,  0, 5, 20),   RECTANGLE(45,  0, 55, 20),
         RECTANGLE(0, 20, 20, 10),   /* Input here */            RECTANGLE(30, 20, 10, 10),  RECTANGLE(40, 20, 5, 10),   RECTANGLE(45, 20, 55, 10),
@@ -127,7 +146,6 @@ START_TEST(case_two_squares)
     {
         assert_rectangle(expected[i], buffer[i], i);
     }
-    ck_assert_int_eq(result, 23);
 }
 END_TEST
 
@@ -280,6 +298,7 @@ Suite * void_mapper_suite(void)
     tcase_add_test(tc_core, case_empty_input_size);
     tcase_add_test(tc_core, case_empty_buffer_ptr);
     tcase_add_test(tc_core, case_empty_buffer_size);
+    tcase_add_test(tc_core, case_buffer_size);
     tcase_add_test(tc_core, case_one_square_in_the_middle);
     tcase_add_test(tc_core, case_two_squares);
     tcase_add_test(tc_core, case_two_squares_reverse_order);
