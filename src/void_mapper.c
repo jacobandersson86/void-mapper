@@ -28,6 +28,17 @@ static bool ranges_intersect(int16_t a0, int16_t a1, int16_t b0, int16_t b1);
  */
 static bool rectangles_intersect(void_mapper_rectangle_t a, void_mapper_rectangle_t b);
 
+/**
+ * @brief Remove elements less than min and greater than max.
+ *
+ * @param arr
+ * @param len
+ * @param min
+ * @param max
+ * @return uint16_t new length of vector.
+ */
+static uint16_t saturate_vector(uint16_t *arr, uint16_t len, uint16_t min, uint16_t max);
+
 static bool ranges_intersect(int16_t a0, int16_t a1, int16_t b0, int16_t b1)
 {
     return  a1 >= b0 && a0 <= b1;
@@ -143,6 +154,32 @@ static uint16_t remove_duplicates(uint16_t *arr, uint16_t len)
     return len;
 }
 
+static uint16_t saturate_vector(uint16_t *arr, uint16_t len, uint16_t min, uint16_t max)
+{
+    size_t new_length = 0;
+
+    // Remove elements less than min
+    for (size_t i = 0; i < len; i++) {
+        if (arr[i] >= min) {
+            arr[new_length++] = arr[i];
+        }
+    }
+
+    // Update length after removing elements less than min
+    len = new_length;
+    new_length = 0;
+
+    // Remove elements greater than max
+    for (size_t i = 0; i < len; i++) {
+        if (arr[i] <= max) {
+            arr[new_length++] = arr[i];
+        }
+    }
+
+    // Update length after removing elements greater than max
+    return new_length;
+}
+
 static bool can_merge(void_mapper_rectangle_t *a, void_mapper_rectangle_t *b) {
     return (a->position.x == b->position.x && a->size.x == b->size.x &&
             (a->position.y + a->size.y == b->position.y || b->position.y + b->size.y == a->position.y)) ||
@@ -217,6 +254,9 @@ uint16_t void_mapper(void_mapper_rectangle_t area, void_mapper_rectangle_t *inpu
 
     uint16_t x_len = remove_duplicates(x_vector, vec_len);
     uint16_t y_len = remove_duplicates(y_vector, vec_len);
+
+    x_len = saturate_vector(x_vector, x_len, area.position.x, area.position.x + area.size.x);
+    y_len = saturate_vector(y_vector, y_len, area.position.y, area.position.y + area.size.y);
 
     uint16_t required_buffer_length = (x_len - 1) * (y_len - 1) - input_length;
     if (buffer_length < required_buffer_length) {

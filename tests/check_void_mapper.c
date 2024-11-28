@@ -149,6 +149,58 @@ START_TEST(case_two_squares)
 }
 END_TEST
 
+START_TEST(case_one_square_inside_one_outside)
+{
+    uint16_t area_bottom_right_x = area.position.x + area.size.x;
+    uint16_t area_bottom_right_y =  area.position.y + area.size.y;
+
+    void_mapper_rectangle_t squares[2] = {
+        RECTANGLE(20, 20, 10, 10),
+        RECTANGLE(area_bottom_right_x, area_bottom_right_y, 5, 5), // <-- This rectangle is outside the area
+    };
+
+    uint8_t expected_voids = 8;
+    uint16_t result = void_mapper(area, squares, 2, buffer, expected_voids);
+
+    void_mapper_rectangle_t expected[8] = {
+        RECTANGLE(0, 0, 20, 20),    RECTANGLE(20, 0, 10, 20),   RECTANGLE(30, 0, 70, 20),
+        RECTANGLE(0, 20, 20, 10),   /* Input was here */        RECTANGLE(30, 20, 70, 10),
+        RECTANGLE(0, 30, 20, 170),  RECTANGLE(20, 30, 10, 170), RECTANGLE(30, 30, 70, 170)
+    };
+
+    for (unsigned int i = 0; i < sizeof(expected)/sizeof(expected[0]); i ++)
+    {
+        assert_rectangle(expected[i], buffer[i], i);
+    }
+    ck_assert_int_eq(result, expected_voids);
+}
+END_TEST
+
+START_TEST(case_one_square_partially_outside)
+{
+    uint16_t area_bottom_right_x = area.position.x + area.size.x;
+    uint16_t area_bottom_right_y =  area.position.y + area.size.y;
+
+    void_mapper_rectangle_t squares[1] = {
+        RECTANGLE(area_bottom_right_x - 5, area_bottom_right_y - 5, 10, 10), // <-- This rectangle is partially outside the area
+    };
+
+    uint16_t expected_voids = 3;
+    uint16_t result = void_mapper(area, squares, 1, buffer, expected_voids);
+
+    ck_assert_int_eq(result, expected_voids);
+    void_mapper_rectangle_t expected[3] = {
+        RECTANGLE(0, 0, 95, 195),  RECTANGLE(95, 0, 5, 195),
+        RECTANGLE(0, 195, 95, 5),  /* The partial rectangle is here */
+    };
+
+    for (unsigned int i = 0; i < sizeof(expected)/sizeof(expected[0]); i ++)
+    {
+        assert_rectangle(expected[i], buffer[i], i);
+    }
+}
+END_TEST
+
 START_TEST(case_two_squares_reverse_order)
 {
     void_mapper_rectangle_t squares[2] = {
@@ -156,8 +208,10 @@ START_TEST(case_two_squares_reverse_order)
         RECTANGLE(20, 20, 10, 10),
     };
 
-    uint16_t result = void_mapper(area, squares, 2, buffer, buffer_length);
+    uint16_t expected_voids = 23;
+    uint16_t result = void_mapper(area, squares, 2, buffer, expected_voids);
 
+    ck_assert_int_eq(result, expected_voids);
     void_mapper_rectangle_t expected[23] = {
         RECTANGLE(0, 0,  20, 20),   RECTANGLE(20, 0, 10, 20),   RECTANGLE(30,  0, 10, 20),  RECTANGLE(40,  0, 5, 20),   RECTANGLE(45,  0, 55, 20),
         RECTANGLE(0, 20, 20, 10),   /* Input here */            RECTANGLE(30, 20, 10, 10),  RECTANGLE(40, 20, 5, 10),   RECTANGLE(45, 20, 55, 10),
@@ -170,7 +224,6 @@ START_TEST(case_two_squares_reverse_order)
     {
         assert_rectangle(expected[i], buffer[i], i);
     }
-    ck_assert_int_eq(result, 23);
 }
 END_TEST
 
@@ -301,6 +354,8 @@ Suite * void_mapper_suite(void)
     tcase_add_test(tc_core, case_buffer_size);
     tcase_add_test(tc_core, case_one_square_in_the_middle);
     tcase_add_test(tc_core, case_two_squares);
+    tcase_add_test(tc_core, case_one_square_inside_one_outside);
+    tcase_add_test(tc_core, case_one_square_partially_outside);
     tcase_add_test(tc_core, case_two_squares_reverse_order);
     tcase_add_test(tc_core, case_squares_sharing_x_and_y);
     tcase_add_test(tc_core, case_squares_adjacent_x_and_y);

@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define VOID_MAPPER_MIN_BUFFER_LENGTH(x) ((2 * (x) + 1)*(2 * (x) + 1) - x)
+
 typedef struct {
     struct {
         uint16_t x;
